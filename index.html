@@ -30,7 +30,6 @@
         .qty-btn { width: 26px; height: 26px; border-radius: 50%; background: #eee; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; }
         .pos-card { cursor: pointer; transition: 0.2s; border: 1px solid transparent; background:white; }
         .pos-card:hover { border-color: #009edb; transform: translateY(-3px); }
-        .member-search-result { position: absolute; top: 100%; left: 0; width: 100%; z-index: 1050; background: white; border: 1px solid #ddd; display: none; }
         #printable-receipt { display: none; }
         @media print { body * { visibility: hidden; } #printable-receipt, #printable-receipt * { visibility: visible; } #printable-receipt { position: absolute; left: 0; top: 0; width: 100%; } }
     </style>
@@ -72,7 +71,7 @@
                     </div>
                     <div class="input-group mb-3 shadow-sm">
                         <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                        <input type="text" id="pos-search" class="form-control" placeholder="ค้นหาสินค้าหรือบาร์โค้ด..." oninput="renderPosGrid()">
+                        <input type="text" id="pos-search" class="form-control" placeholder="ค้นหาสินค้า..." oninput="renderPosGrid()">
                     </div>
                     <div class="d-flex gap-2 mb-3 overflow-auto pb-2" id="cat-filters"></div>
                     <div class="row g-2 overflow-auto" id="pos-grid" style="max-height: 60vh;"></div>
@@ -90,20 +89,20 @@
 
         <div id="view-store" class="view-section">
             <div class="header-bar"><h4>📦 คลังสินค้า</h4><div><button class="btn btn-success" onclick="openProductModal()">+ เพิ่มสินค้า</button><button class="btn btn-secondary" onclick="switchView('dashboard')">กลับ</button></div></div>
-            <div class="table-responsive"><table class="table table-custom table-hover"><thead><tr><th>รูป</th><th>ชื่อสินค้า</th><th>ราคา</th><th>สต็อก</th><th>จัดการ</th></tr></thead><tbody id="store-tbody"></tbody></table></div>
+            <div class="table-responsive"><table class="table table-custom table-hover"><thead><tr><th>รูป</th><th>ชื่อ</th><th>ราคา</th><th>สต็อก</th><th>จัดการ</th></tr></thead><tbody id="store-tbody"></tbody></table></div>
         </div>
 
         <div id="view-history" class="view-section">
             <div class="header-bar"><h4>📜 ประวัติการขาย</h4><button class="btn btn-secondary" onclick="switchView('dashboard')">กลับ</button></div>
-            <div class="table-responsive"><table class="table table-hover"><thead><tr><th>เลขบิล</th><th>เวลา</th><th>ลูกค้า</th><th>ยอดรวม</th><th>สถานะ</th></tr></thead><tbody id="history-tbody"></tbody></table></div>
+            <div class="table-responsive"><table class="table table-hover"><thead><tr><th>เลขบิล</th><th>เวลา</th><th>ยอดรวม</th><th>สถานะ</th></tr></thead><tbody id="history-tbody"></tbody></table></div>
         </div>
 
         <div id="view-settings" class="view-section">
             <div class="card p-4 mx-auto shadow-sm" style="max-width:500px">
                 <h4>ตั้งค่าระบบ</h4>
                 <label>ชื่อร้าน</label><input type="text" id="setting-shopname" class="form-control mb-3">
-                <button class="btn btn-primary w-100 mb-2" onclick="saveSettings()">บันทึก</button>
-                <button class="btn btn-danger w-100" onclick="resetSystem()">ล้างข้อมูลทั้งหมด</button>
+                <button class="btn btn-primary w-100 mb-2" onclick="saveSettings()">บันทึกข้อมูล</button>
+                <button class="btn btn-danger w-100" onclick="resetSystem()">ล้างข้อมูล (Reset)</button>
                 <button class="btn btn-secondary w-100 mt-2" onclick="switchView('dashboard')">กลับ</button>
             </div>
         </div>
@@ -117,7 +116,7 @@
     </div>
 
     <script>
-        // --- CONFIG & DATA ---
+        // --- CONFIG & URL อัปเดตล่าสุด ---
         const CLOUD_URL = "https://script.google.com/macros/s/AKfycby_RnUFgbDgQKs9oRpPvzXArGv0kngmQkK-QvS38W_WwCag1_53tg3MzSrbzQErZ8vt/exec";
 
         const DEFAULT_PRODS = [
@@ -135,15 +134,15 @@
         let cart = [];
         let posState = { catFilter: 'all' };
 
-        // --- CORE FUNCTIONS ---
-        function saveDB() {
+        // --- ระบบ Sync ข้อมูล ---
+        async function saveDB() {
             try {
                 localStorage.setItem('db_products', JSON.stringify(DB.products));
                 localStorage.setItem('db_bills', JSON.stringify(DB.bills));
                 localStorage.setItem('db_settings', JSON.stringify(DB.settings));
                 updateDashboard();
-                syncToCloud(); // ส่งขึ้น Cloud ทุกครั้งที่บันทึก
-            } catch (e) { console.error("Save Error", e); }
+                syncToCloud(); 
+            } catch (e) { console.error("Local Save Error", e); }
         }
 
         async function syncToCloud() {
@@ -162,21 +161,24 @@
         }
 
         async function loadDBFromServer() {
-            Swal.fire({ title: 'กำลังดึงข้อมูลจาก Cloud...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+            Swal.fire({ title: 'กำลังดึงข้อมูลล่าสุด...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
             try {
                 const res = await fetch(`${CLOUD_URL}?action=get_data`);
                 const cloudData = await res.json();
-                if (cloudData) {
+                if (cloudData && cloudData.products) {
                     DB = cloudData;
-                    saveDB();
-                    Swal.fire('สำเร็จ', 'ดึงข้อมูลล่าสุดเรียบร้อยแล้ว', 'success');
+                    localStorage.setItem('db_products', JSON.stringify(DB.products));
+                    localStorage.setItem('db_bills', JSON.stringify(DB.bills));
+                    localStorage.setItem('db_settings', JSON.stringify(DB.settings));
+                    Swal.fire('สำเร็จ', 'ข้อมูลอัปเดตตรงกับระบบ Cloud แล้ว', 'success');
                     location.reload();
                 }
             } catch (e) {
-                Swal.fire('ผิดพลาด', 'ไม่สามารถดึงข้อมูลจาก Cloud ได้', 'error');
+                Swal.fire('แจ้งเตือน', 'ไม่พบข้อมูลบน Cloud หรือการเชื่อมต่อผิดพลาด', 'info');
             }
         }
 
+        // --- UI Logic ---
         function switchView(view) {
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
             document.getElementById(`view-${view}`).classList.add('active');
@@ -230,7 +232,7 @@
                     <div class="fw-bold">${sub.toLocaleString()}</div>
                 </div>`;
             });
-            list.innerHTML = html || '<div class="text-center text-muted">ยังไม่มีสินค้าในตะกร้า</div>';
+            list.innerHTML = html || '<div class="text-center text-muted">ตะกร้าว่าง</div>';
             document.getElementById('summ-total').innerText = total.toLocaleString();
         }
 
@@ -238,22 +240,21 @@
             if (cart.length === 0) return;
             const total = cart.reduce((a,b) => a + (b.price*b.qty), 0);
             Swal.fire({
-                title: 'ยืนยันการชำระเงิน',
-                text: `ยอดรวมทั้งสิ้น ${total} บาท`,
+                title: 'ยืนยันการขาย',
+                text: `รวมทั้งสิ้น ${total} บาท`,
                 showCancelButton: true,
-                confirmButtonText: 'ชำระเงินสด'
+                confirmButtonText: 'ยืนยัน'
             }).then(r => {
                 if (r.isConfirmed) {
-                    const bill = { id: Date.now(), time: new Date().toLocaleString(), total: total, items: [...cart], voided: false, cust: 'ทั่วไป' };
+                    const bill = { id: Date.now(), time: new Date().toLocaleString(), total: total, items: [...cart] };
                     DB.bills.push(bill);
-                    // ตัดสต็อก
                     cart.forEach(c => {
                         const p = DB.products.find(x => x.id === c.id);
                         if(p) p.stock -= c.qty;
                     });
                     cart = [];
                     saveDB();
-                    Swal.fire('สำเร็จ', 'บันทึกการขายเรียบร้อย', 'success');
+                    Swal.fire('เรียบร้อย', 'บันทึกรายการขายสำเร็จ', 'success');
                     renderCart();
                 }
             });
@@ -272,11 +273,11 @@
             tb.innerHTML = html;
         }
 
-        function delProd(id) { if(confirm('ลบสินค้านี้?')) { DB.products = DB.products.filter(x => x.id !== id); saveDB(); renderStore(); } }
+        function delProd(id) { if(confirm('ลบ?')) { DB.products = DB.products.filter(x => x.id !== id); saveDB(); renderStore(); } }
 
         async function openProductModal() {
             const { value: form } = await Swal.fire({
-                title: 'เพิ่มสินค้า',
+                title: 'สินค้าใหม่',
                 html: '<input id="sw-name" class="swal2-input" placeholder="ชื่อสินค้า">' +
                       '<input id="sw-price" type="number" class="swal2-input" placeholder="ราคา">' +
                       '<input id="sw-stock" type="number" class="swal2-input" placeholder="สต็อก">',
@@ -292,7 +293,7 @@
             const tb = document.getElementById('history-tbody');
             let html = '';
             DB.bills.slice().reverse().forEach(b => {
-                html += `<tr><td>${b.id}</td><td>${b.time}</td><td>${b.cust}</td><td>${b.total}</td><td>ปกติ</td></tr>`;
+                html += `<tr><td>${b.id}</td><td>${b.time}</td><td>${b.total}</td><td>สำเร็จ</td></tr>`;
             });
             tb.innerHTML = html;
         }
@@ -307,11 +308,11 @@
         function saveSettings() {
             DB.settings.shopName = document.getElementById('setting-shopname').value;
             saveDB();
-            Swal.fire('สำเร็จ', 'บันทึกการตั้งค่าแล้ว', 'success');
+            Swal.fire('บันทึกสำเร็จ', '', 'success');
         }
 
         function resetSystem() {
-            if(confirm('ต้องการล้างข้อมูลทั้งหมด?')) { localStorage.clear(); location.reload(); }
+            if(confirm('ล้างข้อมูลทั้งหมด?')) { localStorage.clear(); location.reload(); }
         }
 
         document.addEventListener("DOMContentLoaded", updateDashboard);
