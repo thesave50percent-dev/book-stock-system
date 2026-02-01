@@ -2,216 +2,319 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ข้อมูลสินค้าทั้งหมด โกดังหนังสือ (Pro Sync & Cloud)</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dexie/3.2.4/dexie.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mooda Clone - Ultimate POS V9 (Cloud Sync)</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
-        :root { --red: #d32f2f; --green: #2e7d32; --blue: #1976d2; --bg: #f4f7f6; --dark: #333; --orange: #ff9800; }
-        body { font-family: 'Tahoma', sans-serif; margin: 0; background: var(--bg); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        header { background: white; padding: 10px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 100; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed #ddd; padding-bottom: 10px; }
-        .viewport { flex: 1; overflow-y: auto; background: white; position: relative; }
-        .row { display: flex; align-items: flex-start; padding: 10px 15px; border-bottom: 1px solid #eee; transition: 0.2s; height: 140px; position: absolute; width: 100%; box-sizing: border-box; }
-        .row:hover { background: #fffdfd; }
-        .row.hidden-item { opacity: 0.5; background: #f9f9f9; }
-        .gallery-container { display: flex; gap: 5px; overflow-x: auto; max-width: 350px; padding-bottom: 5px; margin-right: 15px; }
-        .gallery-container::-webkit-scrollbar { height: 4px; }
-        .gallery-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
-        .img-thumb { min-width: 80px; height: 110px; object-fit: cover; border-radius: 4px; cursor: zoom-in; border: 1px solid #ddd; flex-shrink: 0; }
-        .shop-highlight { display: inline-block; background: #e3f2fd; color: #0d47a1; padding: 4px 10px; border-radius: 6px; font-weight: 900; font-size: 14px; border: 1px solid #bbdefb; margin-bottom: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .sku-badge { background: #333; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; cursor: copy; margin-top: 5px; display: inline-block; }
-        .count-badge { margin-left: auto; background: var(--blue); color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 13px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); white-space: nowrap; }
-        .btn { padding: 8px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; font-size: 13px; }
-        .btn-red { background: var(--red); color: white; }
-        .btn-green { background: var(--green); color: white; }
-        .btn-grey { background: #555; color: white; }
-        .btn-orange { background: var(--orange); color: white; }
-        .btn-blue { background: var(--blue); color: white; } 
-        select, input[type="text"], input[type="date"] { padding: 8px; border-radius: 6px; border: 1px solid #ccc; height: 35px; box-sizing: border-box; }
-        .filter-bar { display: flex; gap: 10px; align-items: center; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-top: 10px; flex-wrap: wrap; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: white; width: 90%; max-width: 700px; padding: 20px; border-radius: 10px; max-height: 85vh; overflow-y: auto; position: relative; }
-        .img-viewer-content { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; }
-        #fullImg { transition: transform 0.1s; max-height: 90vh; max-width: 90vw; border-radius: 5px; cursor: grab; }
-        .nav-hint { position: absolute; bottom: 20px; color: white; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px; font-size: 12px; pointer-events: none; }
-        .bulk-bar { display: none; background: #fff3e0; padding: 8px 15px; border-radius: 8px; align-items: center; gap: 10px; margin-bottom: 5px; border: 1px solid #ffe0b2; }
-        .select-all-header { position: sticky; top: 0; background: #fff; z-index: 10; padding: 8px 15px; border-bottom: 1px solid #ddd; font-size: 13px; display: flex; align-items: center; color: #555; font-weight: bold; }
-        @media (max-width: 600px) { .filter-bar { justify-content: space-between; } .count-badge { width: 100%; text-align: center; margin-top: 5px; order: 10; } }
+        /* --- CORE STYLES --- */
+        body { font-family: 'Prompt', sans-serif; background-color: #f0f4f8; padding-bottom: 90px; user-select: none; }
+        .view-section { display: none; animation: fadeIn 0.2s; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .info-card { background: rgba(255,255,255,0.9); border-radius: 16px; padding: 15px; border: 1px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+        .btn-launcher { background: #fff; border: none; border-radius: 16px; width: 100%; height: 130px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: 0.2s; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+        .btn-launcher:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,158,219,0.15); }
+        .launcher-icon { font-size: 2.5rem; margin-bottom: 8px; color: #009edb; }
+        .dock-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #fff; padding: 12px 30px; border-radius: 50px; box-shadow: 0 5px 25px rgba(0,0,0,0.15); display: flex; gap: 25px; z-index: 1000; }
+        .dock-item { font-size: 1.6rem; color: #aaa; cursor: pointer; transition: 0.2s; }
+        .dock-item:hover, .dock-item.active { color: #009edb; transform: scale(1.2); }
+        .table-custom { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .cat-btn { border: 1px solid #ddd; background: #fff; padding: 6px 15px; border-radius: 20px; cursor: pointer; transition: 0.2s; white-space: nowrap; font-size: 0.9rem; }
+        .cat-btn.active { background: #009edb; color: #fff; border-color: #009edb; }
+        .qty-btn { width: 26px; height: 26px; border-radius: 50%; background: #eee; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; }
+        .pos-card { cursor: pointer; transition: 0.2s; border: 1px solid transparent; background:white; }
+        .pos-card:hover { border-color: #009edb; transform: translateY(-3px); }
+        .member-search-result { position: absolute; top: 100%; left: 0; width: 100%; z-index: 1050; background: white; border: 1px solid #ddd; display: none; }
+        #printable-receipt { display: none; }
+        @media print { body * { visibility: hidden; } #printable-receipt, #printable-receipt * { visibility: visible; } #printable-receipt { position: absolute; left: 0; top: 0; width: 100%; } }
     </style>
 </head>
 <body>
 
-<div id="hiddenMgrModal" class="modal"><div class="modal-content">...</div></div>
-<div id="setupModal" class="modal"><div class="modal-content">...</div></div>
-<div id="backupModal" class="modal"><div class="modal-content">...</div></div>
-<div id="dupModal" class="modal"><div class="modal-content">...</div></div>
-<div id="imgModal" class="modal" onclick="closeGallery()"><div class="img-viewer-content" onclick="event.stopPropagation()"><img id="fullImg" onwheel="zoomImage(event)"><div class="nav-hint">🖱️ ซูม | ⬅️ ➡️ เลื่อนรูป</div></div></div>
+    <div id="printable-receipt"></div>
 
-<header>
-    <div class="top-bar">
-        <div style="display:flex; align-items:center; gap:10px;">
-            <h2 style="margin:0; color:var(--dark);">📚 โกดังหนังสือ Pro</h2>
-            <button class="btn btn-blue" onclick="syncFromSheets()">☁️ ซิงค์จาก Cloud</button>
-            <button class="btn btn-grey" onclick="openSetup()">⚙️ ร้านค้า</button>
-        </div>
-        <div style="display:flex; gap:10px;">
-            <button onclick="doExport()" class="btn btn-green">📥 Excel</button>
-            <button onclick="clearDB()" class="btn btn-red">⚠️ ล้าง</button>
-        </div>
-    </div>
-
-    <div id="bulkBar" class="bulk-bar">
-        <span id="selCount" style="font-weight:bold;">0 รายการ</span>
-        <button class="btn btn-grey" onclick="bulkVisible(true)">👁️ แสดง</button>
-        <button class="btn btn-grey" onclick="bulkVisible(false)">🚫 ซ่อน</button>
-        <button class="btn btn-red" onclick="bulkDelete()">🗑️ ลบ</button>
-    </div>
-
-    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; background:#eee; padding:10px; border-radius:8px;">
-        <span style="font-weight:bold; font-size:13px;">📥 นำเข้า:</span>
-        <select id="selMain" onchange="updateSubOptions()"></select>
-        <select id="selSub"></select>
-        <button class="btn btn-red" onclick="document.getElementById('fIn').click()">+ อัพโหลดไฟล์</button>
-        <input type="file" id="fIn" hidden accept=".xlsx, .xls" onchange="handleImport(this)">
-    </div>
-
-    <div class="filter-bar">
-        <input type="text" id="srch" placeholder="ค้นหาชื่อสินค้า หรือ SKU..." style="flex:1;" oninput="render()">
-        <span id="displayCount" class="count-badge">📦 รอโหลด...</span>
-    </div>
-</header>
-
-<div class="viewport" id="vPort">
-    <div class="select-all-header">
-        <input type="checkbox" id="mainSelectAll" onchange="toggleSelectAllMain()">
-        <label for="mainSelectAll" style="margin-left:10px;">เลือกทั้งหมด</label>
-    </div>
-    <div id="canvas" style="position:relative;"></div>
-</div>
-
-<script>
-    // --- จุดเชื่อมต่อ GOOGLE SHEETS ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxNnadJiiwklJQ4k1JWyXHaEBF0lyS1lmzmW8iLud5PYgwqlq30adC8Rw_hfnX-1h43/exec"; 
-
-    // ส่งข้อมูลไป Cloud
-    async function syncToSheets(item) {
-        try {
-            fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify(item)
-            });
-            console.log("Synced to Cloud:", item.name);
-        } catch (e) { console.error("Sync Push Error:", e); }
-    }
-
-    // ดึงข้อมูลกลับจาก Cloud
-    async function syncFromSheets() {
-        if(!confirm("ต้องการดึงข้อมูลล่าสุดจาก Cloud มาลงในเครื่องนี้ใช่หรือไม่?")) return;
-        const btn = document.querySelector('button[onclick="syncFromSheets()"]');
-        btn.innerText = "⏳ กำลังซิงค์...";
-        btn.disabled = true;
-
-        try {
-            const response = await fetch(SCRIPT_URL);
-            const data = await response.json();
-            if (data && data.length > 0) {
-                await db.items.clear();
-                await db.items.bulkAdd(data);
-                await reload();
-                alert("✅ ซิงค์สำเร็จ! พบ " + data.length + " รายการ");
-            } else { alert("❓ ไม่พบข้อมูลบน Cloud"); }
-        } catch (e) {
-            alert("❌ การเชื่อมต่อผิดพลาด");
-            console.error(e);
-        } finally {
-            btn.innerText = "☁️ ซิงค์จาก Cloud";
-            btn.disabled = false;
-        }
-    }
-
-    // --- ระบบ Database & Logic (ส่วนที่เหลือเหมือนเดิม) ---
-    const db = new Dexie("StockWarehouseProV13_HiddenMgr"); 
-    db.version(1).stores({ items: "++id, mainUrl, name, sku, shopId, subId, isVisible, uploadDate", settings: "id, data" });
-
-    let master = [];
-    let filteredData = []; 
-    let selectedIds = new Set();
-    const R_HEIGHT = 140;
-
-    window.onload = async () => {
-        const savedConfig = await db.settings.get("config");
-        config = savedConfig ? savedConfig.data : { shops: [{ name: "ร้านเดอะเซฟ", subs: ["ช็อป 1"] }], backupInterval: 0 };
-        initUI();
-        reload();
-    };
-
-    async function reload() { master = await db.items.toArray(); master.sort((a, b) => new Date(b.uploadDate || 0) - new Date(a.uploadDate || 0)); render(); }
-
-    function render() {
-        const q = document.getElementById('srch').value.toLowerCase();
-        filteredData = master.filter(d => d.name.toLowerCase().includes(q) || d.sku.toLowerCase().includes(q));
-        document.getElementById('displayCount').innerText = `📦 รวม: ${filteredData.length.toLocaleString()} รายการ`;
-        const canvas = document.getElementById('canvas');
-        canvas.style.height = (filteredData.length * R_HEIGHT) + 'px';
-        canvas.innerHTML = '';
-        
-        const scrollTop = document.getElementById('vPort').scrollTop;
-        const start = Math.floor(scrollTop / R_HEIGHT);
-        const end = Math.min(start + 10, filteredData.length);
-
-        for(let i=start; i<end; i++) {
-            const item = filteredData[i];
-            const div = document.createElement('div');
-            div.className = `row ${item.isVisible ? '' : 'hidden-item'}`;
-            div.style.top = (i * R_HEIGHT) + 'px';
-            div.innerHTML = `
-                <input type="checkbox" ${selectedIds.has(item.id) ? 'checked' : ''} onchange="toggleSelect(${item.id})">
-                <img src="${item.mainUrl}" class="img-thumb" style="margin: 0 10px;">
-                <div style="flex:1;">
-                    <span class="shop-highlight">${item.shopId}</span>
-                    <div style="font-weight:bold;">${item.name}</div>
-                    <div class="sku-badge">${item.sku}</div>
+    <div class="container py-4">
+        <div id="view-dashboard" class="view-section active">
+            <div class="row g-3 mb-4">
+                <div class="col-md-6"><div class="info-card d-flex align-items-center"><img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" width="50" class="me-3"><div><h5 class="mb-0 fw-bold text-primary">Admin</h5><small class="text-muted" id="sync-status">Cloud Sync: Online</small></div></div></div>
+                <div class="col-md-6"><div class="info-card d-flex align-items-center justify-content-between"><div><h5 class="mb-0 fw-bold" id="shop-name-display">ร้านค้าของคุณ</h5><small class="text-secondary">สาขาหลัก</small></div></div></div>
+            </div>
+            <div class="card border-0 shadow-sm rounded-4 p-3 mb-3 bg-white text-center">
+                <div class="row">
+                    <div class="col-3 border-end"><small class="text-muted">ยอดขาย</small><h4 class="text-primary fw-bold" id="stat-sales">0.00</h4></div>
+                    <div class="col-3 border-end"><small class="text-muted">บิลขาย</small><h4 class="text-dark fw-bold" id="stat-bills">0</h4></div>
+                    <div class="col-3 border-end"><small class="text-muted">พักบิล</small><h4 class="text-warning fw-bold" id="stat-hold">0</h4></div>
+                    <div class="col-3"><small class="text-muted">กำไร</small><h4 class="text-success fw-bold" id="stat-profit">0.00</h4></div>
                 </div>
-                <div style="color:var(--red); font-weight:bold; font-size:18px;">฿${Number(item.price).toLocaleString()}</div>
-            `;
-            canvas.appendChild(div);
-        }
-    }
-    document.getElementById('vPort').onscroll = render;
+            </div>
+            <div class="row g-3">
+                <div class="col-4 col-md-3 col-xl-2"><button class="btn-launcher" onclick="switchView('pos')"><i class="bi bi-calculator-fill launcher-icon"></i><span>งานขาย</span></button></div>
+                <div class="col-4 col-md-3 col-xl-2"><button class="btn-launcher" onclick="switchView('history')"><i class="bi bi-receipt launcher-icon"></i><span>ประวัติบิล</span></button></div>
+                <div class="col-4 col-md-3 col-xl-2"><button class="btn-launcher" onclick="switchView('store')"><i class="bi bi-box-seam-fill launcher-icon text-warning"></i><span>สินค้า</span></button></div>
+                <div class="col-4 col-md-3 col-xl-2"><button class="btn-launcher" onclick="switchView('report')"><i class="bi bi-graph-up-arrow launcher-icon text-danger"></i><span>สรุปยอด</span></button></div>
+                <div class="col-4 col-md-3 col-xl-2"><button class="btn-launcher" onclick="switchView('settings')"><i class="bi bi-gear-fill launcher-icon text-secondary"></i><span>ตั้งค่า</span></button></div>
+                <div class="col-4 col-md-3 col-xl-2"><button class="btn-launcher" onclick="loadDBFromServer()"><i class="bi bi-cloud-download launcher-icon text-info"></i><span>ดึงข้อมูล</span></button></div>
+            </div>
+        </div>
 
-    async function handleImport(input) {
-        if(!input.files[0]) return;
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, {type:'array'});
-            const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-            const toAdd = json.map(row => {
-                const item = {
-                    name: row['ชื่อสินค้า'], sku: row['SKU'] || 'N/A', price: row['ราคา'],
-                    mainUrl: row['รูปหน้าปก'], shopId: document.getElementById('selMain').value,
-                    subId: document.getElementById('selSub').value, isVisible: true, uploadDate: new Date().toISOString()
-                };
-                syncToSheets(item); // ส่งขึ้น Cloud ทีละรายการ
-                return item;
-            });
-            await db.items.bulkAdd(toAdd);
-            reload();
+        <div id="view-pos" class="view-section">
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <div class="d-flex justify-content-between mb-2">
+                        <h4 class="fw-bold"><i class="bi bi-shop"></i> POS</h4>
+                        <button class="btn btn-secondary btn-sm" onclick="switchView('dashboard')">กลับ</button>
+                    </div>
+                    <div class="input-group mb-3 shadow-sm">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="text" id="pos-search" class="form-control" placeholder="ค้นหาสินค้าหรือบาร์โค้ด..." oninput="renderPosGrid()">
+                    </div>
+                    <div class="d-flex gap-2 mb-3 overflow-auto pb-2" id="cat-filters"></div>
+                    <div class="row g-2 overflow-auto" id="pos-grid" style="max-height: 60vh;"></div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card shadow-sm h-100 p-3">
+                        <div id="cart-list" style="max-height: 40vh; overflow-y: auto;"></div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-2"><span>รวมสุทธิ</span><h3 class="fw-bold text-primary" id="summ-total">0.00</h3></div>
+                        <button class="btn btn-primary w-100 py-3 fw-bold" onclick="openPayment()">ชำระเงิน</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-store" class="view-section">
+            <div class="header-bar"><h4>📦 คลังสินค้า</h4><div><button class="btn btn-success" onclick="openProductModal()">+ เพิ่มสินค้า</button><button class="btn btn-secondary" onclick="switchView('dashboard')">กลับ</button></div></div>
+            <div class="table-responsive"><table class="table table-custom table-hover"><thead><tr><th>รูป</th><th>ชื่อสินค้า</th><th>ราคา</th><th>สต็อก</th><th>จัดการ</th></tr></thead><tbody id="store-tbody"></tbody></table></div>
+        </div>
+
+        <div id="view-history" class="view-section">
+            <div class="header-bar"><h4>📜 ประวัติการขาย</h4><button class="btn btn-secondary" onclick="switchView('dashboard')">กลับ</button></div>
+            <div class="table-responsive"><table class="table table-hover"><thead><tr><th>เลขบิล</th><th>เวลา</th><th>ลูกค้า</th><th>ยอดรวม</th><th>สถานะ</th></tr></thead><tbody id="history-tbody"></tbody></table></div>
+        </div>
+
+        <div id="view-settings" class="view-section">
+            <div class="card p-4 mx-auto shadow-sm" style="max-width:500px">
+                <h4>ตั้งค่าระบบ</h4>
+                <label>ชื่อร้าน</label><input type="text" id="setting-shopname" class="form-control mb-3">
+                <button class="btn btn-primary w-100 mb-2" onclick="saveSettings()">บันทึก</button>
+                <button class="btn btn-danger w-100" onclick="resetSystem()">ล้างข้อมูลทั้งหมด</button>
+                <button class="btn btn-secondary w-100 mt-2" onclick="switchView('dashboard')">กลับ</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="dock-bar">
+        <div class="dock-item" onclick="switchView('dashboard')"><i class="bi bi-house-door-fill"></i></div>
+        <div class="dock-item" onclick="switchView('pos')"><i class="bi bi-calculator"></i></div>
+        <div class="dock-item" onclick="switchView('store')"><i class="bi bi-box-seam"></i></div>
+        <div class="dock-item" onclick="loadDBFromServer()"><i class="bi bi-cloud-arrow-down-fill"></i></div>
+    </div>
+
+    <script>
+        // --- CONFIG & DATA ---
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycby_RnUFgbDgQKs9oRpPvzXArGv0kngmQkK-QvS38W_WwCag1_53tg3MzSrbzQErZ8vt/exec";
+
+        const DEFAULT_PRODS = [
+            {id:1,name:'เอสเพรสโซ่',cat:'drink',price:45,stock:100,img:'https://cdn-icons-png.flaticon.com/512/924/924514.png'},
+            {id:2,name:'ลาเต้เย็น',cat:'drink',price:55,stock:80,img:'https://cdn-icons-png.flaticon.com/512/2935/2935307.png'}
+        ];
+
+        let DB = {
+            products: JSON.parse(localStorage.getItem('db_products')) || DEFAULT_PRODS,
+            bills: JSON.parse(localStorage.getItem('db_bills')) || [],
+            settings: JSON.parse(localStorage.getItem('db_settings')) || {shopName:'ร้านค้าของคุณ'},
+            categories: ['drink','food','bakery','other']
         };
-        reader.readAsArrayBuffer(input.files[0]);
-    }
 
-    function initUI() {
-        document.getElementById('selMain').innerHTML = config.shops.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
-        updateSubOptions();
-    }
-    function updateSubOptions() {
-        const shop = config.shops.find(s => s.name === document.getElementById('selMain').value);
-        document.getElementById('selSub').innerHTML = shop.subs.map(s => `<option value="${s}">${s}</option>`).join('');
-    }
-    function toggleSelect(id) { selectedIds.has(id) ? selectedIds.delete(id) : selectedIds.add(id); render(); }
-</script>
+        let cart = [];
+        let posState = { catFilter: 'all' };
+
+        // --- CORE FUNCTIONS ---
+        function saveDB() {
+            try {
+                localStorage.setItem('db_products', JSON.stringify(DB.products));
+                localStorage.setItem('db_bills', JSON.stringify(DB.bills));
+                localStorage.setItem('db_settings', JSON.stringify(DB.settings));
+                updateDashboard();
+                syncToCloud(); // ส่งขึ้น Cloud ทุกครั้งที่บันทึก
+            } catch (e) { console.error("Save Error", e); }
+        }
+
+        async function syncToCloud() {
+            document.getElementById('sync-status').innerText = "Cloud Sync: Saving...";
+            try {
+                await fetch(CLOUD_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "sync_all", data: DB })
+                });
+                document.getElementById('sync-status').innerText = "Cloud Sync: Updated";
+            } catch (e) {
+                document.getElementById('sync-status').innerText = "Cloud Sync: Offline";
+            }
+        }
+
+        async function loadDBFromServer() {
+            Swal.fire({ title: 'กำลังดึงข้อมูลจาก Cloud...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+            try {
+                const res = await fetch(`${CLOUD_URL}?action=get_data`);
+                const cloudData = await res.json();
+                if (cloudData) {
+                    DB = cloudData;
+                    saveDB();
+                    Swal.fire('สำเร็จ', 'ดึงข้อมูลล่าสุดเรียบร้อยแล้ว', 'success');
+                    location.reload();
+                }
+            } catch (e) {
+                Swal.fire('ผิดพลาด', 'ไม่สามารถดึงข้อมูลจาก Cloud ได้', 'error');
+            }
+        }
+
+        function switchView(view) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.getElementById(`view-${view}`).classList.add('active');
+            if (view === 'pos') { initPOS(); renderPosGrid(); }
+            if (view === 'store') renderStore();
+            if (view === 'history') renderHistory();
+            if (view === 'dashboard') updateDashboard();
+        }
+
+        function initPOS() {
+            let html = `<div class="cat-btn ${posState.catFilter==='all'?'active':''}" onclick="filterCat('all')">ทั้งหมด</div>`;
+            DB.categories.forEach(c => {
+                html += `<div class="cat-btn ${posState.catFilter===c?'active':''}" onclick="filterCat('${c}')">${c}</div>`;
+            });
+            document.getElementById('cat-filters').innerHTML = html;
+        }
+
+        function filterCat(c) { posState.catFilter = c; initPOS(); renderPosGrid(); }
+
+        function renderPosGrid() {
+            const grid = document.getElementById('pos-grid');
+            const search = document.getElementById('pos-search').value.toLowerCase();
+            let html = '';
+            DB.products.forEach(p => {
+                if ((posState.catFilter === 'all' || p.cat === posState.catFilter) && p.name.toLowerCase().includes(search)) {
+                    html += `<div class="col-6 col-md-4"><div class="card p-2 text-center pos-card shadow-sm" onclick="addToCart(${p.id})">
+                        <img src="${p.img||'https://via.placeholder.com/50'}" height="50" class="mx-auto my-2">
+                        <div class="fw-bold small">${p.name}</div><div class="text-primary">${p.price}.-</div>
+                    </div></div>`;
+                }
+            });
+            grid.innerHTML = html;
+        }
+
+        function addToCart(id) {
+            const p = DB.products.find(x => x.id === id);
+            const item = cart.find(x => x.id === id);
+            if (item) item.qty++; else cart.push({ ...p, qty: 1 });
+            renderCart();
+        }
+
+        function renderCart() {
+            const list = document.getElementById('cart-list');
+            let total = 0;
+            let html = '';
+            cart.forEach((c, i) => {
+                let sub = c.price * c.qty;
+                total += sub;
+                html += `<div class="d-flex justify-content-between mb-2">
+                    <div class="small">${c.name} x${c.qty}</div>
+                    <div class="fw-bold">${sub.toLocaleString()}</div>
+                </div>`;
+            });
+            list.innerHTML = html || '<div class="text-center text-muted">ยังไม่มีสินค้าในตะกร้า</div>';
+            document.getElementById('summ-total').innerText = total.toLocaleString();
+        }
+
+        function openPayment() {
+            if (cart.length === 0) return;
+            const total = cart.reduce((a,b) => a + (b.price*b.qty), 0);
+            Swal.fire({
+                title: 'ยืนยันการชำระเงิน',
+                text: `ยอดรวมทั้งสิ้น ${total} บาท`,
+                showCancelButton: true,
+                confirmButtonText: 'ชำระเงินสด'
+            }).then(r => {
+                if (r.isConfirmed) {
+                    const bill = { id: Date.now(), time: new Date().toLocaleString(), total: total, items: [...cart], voided: false, cust: 'ทั่วไป' };
+                    DB.bills.push(bill);
+                    // ตัดสต็อก
+                    cart.forEach(c => {
+                        const p = DB.products.find(x => x.id === c.id);
+                        if(p) p.stock -= c.qty;
+                    });
+                    cart = [];
+                    saveDB();
+                    Swal.fire('สำเร็จ', 'บันทึกการขายเรียบร้อย', 'success');
+                    renderCart();
+                }
+            });
+        }
+
+        function renderStore() {
+            const tb = document.getElementById('store-tbody');
+            let html = '';
+            DB.products.forEach(p => {
+                html += `<tr>
+                    <td><img src="${p.img||''}" width="30"></td>
+                    <td>${p.name}</td><td>${p.price}</td><td>${p.stock}</td>
+                    <td><button class="btn btn-sm btn-danger" onclick="delProd(${p.id})"><i class="bi bi-trash"></i></button></td>
+                </tr>`;
+            });
+            tb.innerHTML = html;
+        }
+
+        function delProd(id) { if(confirm('ลบสินค้านี้?')) { DB.products = DB.products.filter(x => x.id !== id); saveDB(); renderStore(); } }
+
+        async function openProductModal() {
+            const { value: form } = await Swal.fire({
+                title: 'เพิ่มสินค้า',
+                html: '<input id="sw-name" class="swal2-input" placeholder="ชื่อสินค้า">' +
+                      '<input id="sw-price" type="number" class="swal2-input" placeholder="ราคา">' +
+                      '<input id="sw-stock" type="number" class="swal2-input" placeholder="สต็อก">',
+                preConfirm: () => [document.getElementById('sw-name').value, document.getElementById('sw-price').value, document.getElementById('sw-stock').value]
+            });
+            if(form && form[0]) {
+                DB.products.push({ id: Date.now(), name: form[0], price: +form[1], stock: +form[2], cat: 'other' });
+                saveDB(); renderStore();
+            }
+        }
+
+        function renderHistory() {
+            const tb = document.getElementById('history-tbody');
+            let html = '';
+            DB.bills.slice().reverse().forEach(b => {
+                html += `<tr><td>${b.id}</td><td>${b.time}</td><td>${b.cust}</td><td>${b.total}</td><td>ปกติ</td></tr>`;
+            });
+            tb.innerHTML = html;
+        }
+
+        function updateDashboard() {
+            const totalSales = DB.bills.reduce((a, b) => a + b.total, 0);
+            document.getElementById('stat-sales').innerText = totalSales.toLocaleString();
+            document.getElementById('stat-bills').innerText = DB.bills.length;
+            document.getElementById('shop-name-display').innerText = DB.settings.shopName;
+        }
+
+        function saveSettings() {
+            DB.settings.shopName = document.getElementById('setting-shopname').value;
+            saveDB();
+            Swal.fire('สำเร็จ', 'บันทึกการตั้งค่าแล้ว', 'success');
+        }
+
+        function resetSystem() {
+            if(confirm('ต้องการล้างข้อมูลทั้งหมด?')) { localStorage.clear(); location.reload(); }
+        }
+
+        document.addEventListener("DOMContentLoaded", updateDashboard);
+    </script>
 </body>
 </html>
