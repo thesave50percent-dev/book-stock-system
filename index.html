@@ -41,7 +41,7 @@
         .nav-hint { position: absolute; bottom: 20px; color: white; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px; font-size: 12px; pointer-events: none; }
         .bulk-bar { display: none; background: #fff3e0; padding: 8px 15px; border-radius: 8px; align-items: center; gap: 10px; margin-bottom: 5px; border: 1px solid #ffe0b2; }
         .backup-alert { display: none; background: #fff3cd; color: #856404; padding: 10px; text-align: center; border-bottom: 1px solid #ffeeba; font-weight: bold; justify-content: center; align-items: center; gap: 10px; }
-        .select-all-header { position: sticky; top: 0; background: #fff; z-index: 10; padding: 8px 15px; border-bottom: 1px solid #ddd; font-size: 13px; display: flex; align-items: center; color: #555; font-weight: bold; }
+        .select-all-header { position: sticky; top: 0; background: #fff; z-index: 10; padding: 8px 15px; border-bottom: 10px solid #ddd; font-size: 13px; display: flex; align-items: center; color: #555; font-weight: bold; }
         @media (max-width: 600px) { .filter-bar { justify-content: space-between; } .count-badge { width: 100%; text-align: center; margin-top: 5px; order: 10; } }
     </style>
 </head>
@@ -117,7 +117,7 @@
 <div id="imgModal" class="modal" onclick="closeGallery()">
     <div class="img-viewer-content" onclick="event.stopPropagation()">
         <img id="fullImg" onwheel="zoomImage(event)">
-        <div class="nav-hint">🖱️ หมุนเมาส์เพื่อซูม | ⬅️ ➡️ กดลูกศรแป้นพิมพ์เพื่อเลื่อนรูป | แตะพื้นหลังเพื่อปิด</div>
+        <div class="nav-hint">🖱️ หมุนเมาส์เพื่อซูม | ⬅️ ➡️ กดลูกศรแป้นพิมพ์เพื่อเลื่อนรูป | แแตะพื้นหลังเพื่อปิด</div>
     </div>
 </div>
 
@@ -182,14 +182,14 @@
 
 <script>
     // --- จุดเชื่อมต่อ GOOGLE SHEETS ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQNk6DxuLcuSps3R8aY8X2Qwar6qCczQ8gA08Y4laz5OMM3-gN15nGcYk7ohGQiJxr/exec"; 
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxNnadJiiwklJQ4k1JWyXHaEBF0lyS1lmzmW8iLud5PYgwqlq30adC8Rw_hfnX-1h43/exec"; 
 
     async function syncToSheets(item) {
         try {
             fetch(SCRIPT_URL, {
                 method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain' }, // ใช้ text/plain แก้ปัญหา CORS
+                // mode: 'no-cors', // นำออกเพื่อให้ Apps Script ฝั่งรับทำงานได้เต็มที่
+                headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify(item)
             });
             console.log("Synced to Sheets:", item.name);
@@ -648,7 +648,7 @@
                         mainUrl: mainUrl, imgs: imgList, name: name, sku: sku,
                         price: row['ราคา'] || 0, shopId: mainShop, subId: subShop,
                         isVisible: true, uploadDate: uploadTime,
-                        sortKey: name.replace(/[^ก-ฮa-zA-Z0-9]/g, '')
+                        // sortKey: name.replace(/[^ก-ฮa-zA-Z0-9]/g, '')
                     };
                     toAdd.push(newItem);
                     syncToSheets(newItem); // <--- ส่งข้อมูลไป Google Sheets
